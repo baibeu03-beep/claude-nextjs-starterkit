@@ -223,3 +223,8 @@ const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
   sidebar`를 다시 실행하면 되돌아가므로 그때 다시 고쳐야 합니다.
 - `AGENTS.md`의 `nextjs-agent-rules` 블록은 `next dev`가 다시 씁니다. 지우려
   하지 말고 작업 내용과 함께 커밋하세요.
+- **코드 구현·수정을 마치면 `code-reviewer` 서브에이전트를 호출해 리뷰를
+  받습니다**(`.claude/agents/code-reviewer.md`). 이 에이전트는 읽기 전용이라
+  명령을 실행하지 못하므로, 호출 전에 `npm run typecheck`를 직접 돌리고 변경
+  파일 목록을 프롬프트에 담아 넘깁니다. 돌아온 🔴 항목은 사용자에게 보고한 뒤
+  수정합니다. 질문 답변, 조사, 문서 수정만 한 경우에는 호출하지 않습니다.
