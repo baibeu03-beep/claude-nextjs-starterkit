@@ -85,17 +85,26 @@ export function LoginForm() {
               <FieldError errors={[errors.password]} />
             </Field>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? <Spinner /> : null}
-              로그인
-            </Button>
+            {/* 제출 버튼과 회원가입 안내는 하나의 Field로 묶어 간격을 좁힙니다
+                (login-01 블록과 동일한 구조). Field가 자식에 w-full을 적용합니다. */}
+            <Field>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+              >
+                {isSubmitting ? <Spinner /> : null}
+                로그인하기
+              </Button>
 
-            <FieldDescription className="text-center">
-              계정이 없으신가요?{" "}
-              <Link href="/signup" className="underline underline-offset-4">
-                회원가입
-              </Link>
-            </FieldDescription>
+              <FieldDescription className="text-center">
+                계정이 없으신가요?{" "}
+                <Link href="/signup" className="underline underline-offset-4">
+                  회원가입
+                </Link>
+              </FieldDescription>
+            </Field>
           </FieldGroup>
         </form>
       </CardContent>
