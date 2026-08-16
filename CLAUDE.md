@@ -31,8 +31,52 @@ npx shadcn@latest add <component>
 
 ## 아키텍처
 
-Next.js 16 App Router, React 19, Tailwind CSS v4, shadcn/ui — 각각 공식 가이드
-그대로 설치되어 있습니다. 소스는 `src/` 아래에 있으며 `@/*`로 별칭 처리됩니다.
+Next.js 16 App Router, React 19, Tailwind CSS v4, shadcn/ui(Base UI) 기반의
+스타터킷입니다. 소스는 `src/` 아래에 있으며 `@/*`로 별칭 처리됩니다.
+
+폼·테이블·URL 상태·환경변수는 직접 구현하지 않고 아래 라이브러리에 위임합니다.
+새 기능을 추가할 때 같은 문제를 다시 푸는 의존성(예: `react-query`, `zustand`)을
+들이기 전에 먼저 이 목록으로 해결되는지 확인하세요. 선택 근거는 `README.md`에
+정리되어 있습니다.
+
+`react-hook-form` + `zod` + `@hookform/resolvers` · `@tanstack/react-table` ·
+`nuqs` · `@t3-oss/env-nextjs` · `date-fns` · `recharts` · `server-only` ·
+`next-themes` · `sonner` · `lucide-react`
+
+### 라우트 구조와 데이터 흐름
+
+라우트 그룹으로 URL을 바꾸지 않으면서 서로 다른 셸을 적용합니다.
+
+| 경로 | 셸 | 렌더링 |
+| --- | --- | --- |
+| `src/app/page.tsx` | `SiteHeader` + `SiteFooter` (공개) | static |
+| `src/app/(app)/*` | `SidebarProvider` + `AppSidebar` + `AppHeader` | dynamic |
+| `src/app/(auth)/*` | 사이드바 없는 중앙 정렬 카드 | static |
+| `src/app/api/*` | Route Handler | dynamic |
+
+`(app)`이 dynamic인 이유는 레이아웃이 `cookies()`를 읽기 때문입니다(아래 참고).
+
+데이터는 **서버 컴포넌트에서 읽어 클라이언트 컴포넌트에 props로 내려보냅니다.**
+`(app)/users/page.tsx`가 전형입니다: `listUsers()`로 서버에서 조회한 뒤
+`<DataTable>`에 넘기므로 데이터 접근 코드는 클라이언트 번들에 들어가지 않습니다.
+쓰기는 `features/*/actions.ts`의 서버 액션이 처리하고 `revalidatePath()`로
+갱신합니다.
+
+실제 백엔드를 붙이는 교체 지점은 두 곳뿐입니다. 시그니처만 유지하면 호출부는
+수정할 필요가 없습니다.
+
+- 데이터: `src/features/users/data.ts` (현재 인메모리 목 데이터)
+- 인증: `src/lib/session.ts`의 `getCurrentUser()`
+
+### URL이 상태 저장소입니다
+
+검색어·페이지·페이지 크기·설정 탭은 `useState`가 아니라 `nuqs`의
+`useQueryState`로 관리합니다(`data-table.tsx`, `settings-tabs.tsx`). 덕분에
+현재 화면을 그대로 공유·북마크할 수 있고 새로고침해도 유지되며, 서버 렌더링
+단계에서 이미 필터가 적용된 HTML이 나옵니다.
+
+목록/탭 형태의 UI 상태를 새로 추가할 때는 로컬 상태보다 이 패턴을 먼저
+고려하세요. 기본값은 `clearOnDefault`로 URL에서 생략합니다.
 
 ### 이 프리셋은 Radix가 아니라 Base UI를 사용합니다
 
@@ -81,10 +125,15 @@ Tailwind v4는 CSS-first 방식입니다. `tailwind.config.*`는 의도적으로
 합니다. 테마 클래스가 클라이언트에서 적용되므로 `<html>`에는
 `suppressHydrationWarning`이 필요합니다.
 
-Provider는 `src/components/providers/index.tsx`에 모여 있고 중첩 순서는
+### 전역 Provider
+
+Provider는 `src/components/providers/index.tsx` 한 곳에 모여 있고 중첩 순서는
 `ThemeProvider` → `NuqsAdapter` → `TooltipProvider` → children입니다.
-`<Toaster />`는 `layout.tsx`에서 `<Providers>`의 형제로 렌더링됩니다.
+`<Toaster />`는 `layout.tsx`에서 `<Providers>`의 형제로 렌더링됩니다(어떤
+Provider 컨텍스트에도 의존하지 않습니다).
+
 `NuqsAdapter`를 빼면 `useQueryState`를 쓰는 모든 컴포넌트가 런타임에 죽습니다.
+Provider를 추가할 때는 `layout.tsx`가 아니라 이 파일을 수정하세요.
 
 ### 컴포넌트 계층
 
@@ -134,6 +183,21 @@ v9는 v8과 API가 다릅니다. 학습 데이터의 v8 예제는 대부분 맞�
 - 제네릭에 features가 추가됩니다: `ColumnDef<TFeatures, TData, TValue>`
 - `TData`에는 반드시 `extends RowData` 제약이 필요합니다(없으면 타입 에러)
 - `table.getState()` → `table.state`, `table.firstPage()`/`lastPage()` 사용 가능
+
+### 사이드바 열림 상태는 쿠키를 거칩니다
+
+`src/components/ui/sidebar.tsx`는 토글할 때마다 `sidebar_state` 쿠키에 값을
+씁니다. `(app)/layout.tsx`는 서버에서 그 쿠키를 읽어 `SidebarProvider`의
+`defaultOpen`으로 넘깁니다.
+
+```tsx
+const cookieStore = await cookies();
+const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+```
+
+이 연결을 끊으면 서버는 항상 "열림"으로 렌더하고 클라이언트가 뒤늦게 닫으므로
+새로고침할 때마다 사이드바가 깜빡입니다. 조용히 나빠지기만 하고 에러는 나지
+않으니 주의하세요. `(app)`이 dynamic 렌더링인 것도 이 `cookies()` 호출 때문입니다.
 
 ### Turbopack 루트
 
