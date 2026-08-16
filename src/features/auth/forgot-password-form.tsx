@@ -65,16 +65,22 @@ export function ForgotPasswordForm() {
               <FieldError errors={[errors.email]} />
             </Field>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? <Spinner /> : null}
-              재설정 링크 보내기
-            </Button>
+            {/* 버튼 영역 구조는 login-form.tsx와 동일하게 유지합니다. */}
+            <Field>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+              >
+                {isSubmitting ? <Spinner aria-hidden /> : null}
+                재설정 링크 보내기
+              </Button>
 
-            <FieldDescription className="text-center">
-              <Link href="/login" className="underline underline-offset-4">
-                로그인으로 돌아가기
-              </Link>
-            </FieldDescription>
+              <FieldDescription className="text-center">
+                <Link href="/login">로그인으로 돌아가기</Link>
+              </FieldDescription>
+            </Field>
           </FieldGroup>
         </form>
       </CardContent>

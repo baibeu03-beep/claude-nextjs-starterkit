@@ -94,15 +94,17 @@ export function LoginForm() {
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? <Spinner /> : null}
+                {/* Spinner의 role="status" aria-label="Loading"이 버튼의 접근
+                    가능한 이름에 섞이지 않도록 숨깁니다. 로딩 상태는 aria-busy로
+                    전달됩니다. */}
+                {isSubmitting ? <Spinner aria-hidden /> : null}
                 로그인하기
               </Button>
 
+              {/* FieldDescription이 자식 앵커에 underline과 hover:text-primary를
+                  적용하므로 Link에 별도 클래스가 필요 없습니다. */}
               <FieldDescription className="text-center">
-                계정이 없으신가요?{" "}
-                <Link href="/signup" className="underline underline-offset-4">
-                  회원가입
-                </Link>
+                계정이 없으신가요? <Link href="/signup">회원가입</Link>
               </FieldDescription>
             </Field>
           </FieldGroup>

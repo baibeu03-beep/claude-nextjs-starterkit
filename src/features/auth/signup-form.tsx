@@ -97,17 +97,22 @@ export function SignupForm() {
               <FieldError errors={[errors.confirmPassword]} />
             </Field>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? <Spinner /> : null}
-              계정 만들기
-            </Button>
+            {/* 버튼 영역 구조는 login-form.tsx와 동일하게 유지합니다. */}
+            <Field>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+              >
+                {isSubmitting ? <Spinner aria-hidden /> : null}
+                계정 만들기
+              </Button>
 
-            <FieldDescription className="text-center">
-              이미 계정이 있으신가요?{" "}
-              <Link href="/login" className="underline underline-offset-4">
-                로그인
-              </Link>
-            </FieldDescription>
+              <FieldDescription className="text-center">
+                이미 계정이 있으신가요? <Link href="/login">로그인</Link>
+              </FieldDescription>
+            </Field>
           </FieldGroup>
         </form>
       </CardContent>
